@@ -1,164 +1,226 @@
-# Template Convention Metadata
+# Language Localization Convention for Zarr
 
-- **UUID**: 00000000-0000-0000-0000-000000000000
-- **Name**: Template
-- **Schema URL**: "https://raw.githubusercontent.com/zarr-conventions/template/refs/tags/v1/schema.json"
-- **Spec URL**: "https://github.com/zarr-conventions/template/blob/v1/README.md"
-- **Scope**: Array, Group
-- **Extension Maturity Classification**: Proposal
-- **Owner**: @your-github-handle, @another-github-handle
+- **UUID:** `6df0d0c6-c26e-4580-94e9-7c6adff481a4`
+- **Name:** `lan`
+- **Namespace:** `lan:`
+- **Schema URL:** https://raw.githubusercontent.com/R-CF/zarr_convention_lan/refs/heads/main/schema.json
+- **Spec URL:** https://github.com/R-CF/zarr_convention_lan/refs/heads/main/README.md
+- **Extension Maturity Classification:** Proposal
+- **Owner:** @pvanlaake
 
 ## Description
 
-This convention defines [brief description of what this convention does]. All properties use the `template:` namespace prefix (or nested `template` object) and are placed at the root `attributes` level following the [Zarr Conventions Specification](https://github.com/zarr-conventions/zarr-conventions-spec).
+This convention lets a Zarr node carry its natural-language attribute values in several languages. It encodes the language localisation package (`lan`) of the ISO 19115-1 conceptual model, specifically the classes `PT_Locale` and `PT_FreeText`.
 
-[Add more detailed description of the convention, its purpose, and how it fits into the Zarr ecosystem. Explain what problem it solves and how it should be used.]
+- Locales are encoded exactly as `PT_Locale` in ISO/TR 19115-4 (`mdj` 1.0.0), the ISO/TC 211 JSON implementation of ISO 19115-1.
+- `PT_FreeText` is not part of ISO/TR 19115-4. This convention gives it a JSON encoding that follows the ISO 19115-1 conceptual model and the ISO 19115-3 XML encoding.
 
-- Examples:
-  - [Convention metadata only](examples/minimal_example.json)
-  - [Key-prefixed pattern (recommended)](examples/key_prefixed_example.json)
-  - [Nested pattern](examples/nested_example.json)
+The value in the default language stays in the ordinary attribute. Translations are added in a separate structure. A reader that is unaware of this convention therefore still sees a complete, valid set of attributes in the default language.
 
 ## Motivation
 
-- **First benefit**: Explanation of the first key benefit this convention provides
-- **Second benefit**: Explanation of the second key benefit
-- **Third benefit**: Explanation of additional benefits
-- **Use case alignment**: How this convention aligns with common use cases in the domain
+Several jurisdictions require metadata in more than one language, for example the official languages of Canada, the EU member states, or the UN. ISO 19115 has long supported this in XML through `PT_FreeText`. Zarr attributes are JSON, so this convention gives multilingual Zarr metadata the same conceptual basis. Converting to and from ISO 19115-3 XML is then a mechanical mapping.
 
 ## Convention Registration
 
-The convention must be registered in `zarr_conventions`:
-
 ```json
 {
-  "zarr_conventions": [
-    {
-      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/template/refs/tags/v1/schema.json",
-      "spec_url": "https://github.com/zarr-conventions/template/blob/v1/README.md",
-      "uuid": "00000000-0000-0000-0000-000000000000",
-      "name": "template:",
-      "description": "Brief description of the convention"
-    }
-  ]
+  "uuid": "6df0d0c6-c26e-4580-94e9-7c6adff481a4",
+  "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_lan/refs/heads/main/schema.json",
+  "spec_url": "https://github.com/R-CF/zarr_convention_lan/refs/heads/main/README.md",
+  "name": "lan",
+  "description": "Multilingual attribute values based on ISO 19115-1 PT_Locale and PT_FreeText"
 }
 ```
 
 ## Applicable To
 
-This convention can be used with these parts of the Zarr hierarchy:
+Group and Array.
 
-- [x] Group
-- [x] Array
+The convention applies independently to each node. **There is no inheritance:** locale identifiers are only meaningful within the `zarr.json` document that declares them, just as `PT_Locale` identifiers are scoped to a single ISO 19115-3 metadata record. A node that uses `lan:freeText` MUST declare its own locales.
 
 ## Properties
 
-All properties are placed at the root `attributes` level. To avoid attribute name collisions with other conventions, this convention supports the following pattern [remove the pattern irrelevant for this convention]:
+| Property | Type | Required | ISO 19115-1 | Description |
+|------|:---:|:------:|:----:|-------------|
+| `lan:defaultLocale` | Locale | yes | `defaultLocale` | Locale of the ordinary attribute values |
+| `lan:otherLocale` | [Locale] | with `lan:freeText` | `otherLocale` | Additional locales, each with an `id` |
+| `lan:freeText` | object | with `lan:otherLocale` | `PT_FreeText` | Localised values, keyed by attribute name and locale id |
 
-#### 1. Key-Prefixed Pattern (Recommended)
+### Locale object
 
-Individual attributes are prefixed with `template:`. This is the recommended approach as it enables better composability - other conventions can extend objects defined by this convention.
+A Locale object is an ISO/TR 19115-4 `PT_Locale`, with the constraints and the two extensions listed below:
 
-**Convention metadata name**: `template:`
+| Field | Type | Required | Basis | Description |
+|---|:---:|:------:|------|-------------|
+| `language` | string | yes | ISO/TR 19115-4 | ISO 639-2/T alpha-3 code (e.g. `fra`, `zho`). Where a language has no ISO 639-2 code, use its ISO 639-3 code. |
+| `country` | string | no | ISO/TR 19115-4 | ISO 3166-1 alpha-2 code (e.g. `CA`). |
+| `characterEncoding` | string | yes | ISO/TR 19115-4 | MUST be `"utf8"`. |
+| `id` | string | in `lan:otherLocale` only | extension; `PT_Locale/@id` in ISO 19115-3 | Identifier of the locale within the node. MUST be unique among the node's `lan:otherLocale` entries. MUST NOT appear in `lan:defaultLocale`. |
+| `script` | string | no | extension | ISO 15924 alpha-4 code (e.g. `Hans`, `Latn`). |
 
-| Field Name           | Type                      | Description                                  |
-| -------------------- | ------------------------- | -------------------------------------------- |
-| template:new_field   | string                    | **REQUIRED**. Describe the required field... |
-| template:xyz         | [XYZ Object](#xyz-object) | Describe the field...                        |
-| template:another_one | \[number]                 | Describe the field...                        |
+The value of `characterEncoding` is fixed: Zarr JSON metadata is UTF-8, so the field has only one possible value. It is required anyway so that every Locale object validates against the ISO/TR 19115-4 schema.
 
-**Example**:
+`script` is needed when the language alone does not determine the writing system. `zho`, for example, can be written in Simplified (`Hans`) or Traditional (`Hant`) script. Writers SHOULD set `script` in such cases and MAY omit it otherwise. Text direction is a property of the script and is therefore not recorded.
+
+### lan:freeText
+
+`lan:freeText` is an object whose keys are names of attributes of the same node. Each value is an object mapping locale ids from `lan:otherLocale` to the localised string:
 
 ```json
-{
-  "attributes": {
-    "zarr_conventions": [{ "name": "template:", "spec_url": "..." }],
-    "template:new_field": "example value",
-    "template:xyz": { "x": 1.0, "y": 2.0, "z": 3.0 }
-  }
+"lan:freeText": {
+  "<attribute name>": { "<locale id>": "<localised string>", ... },
+  ...
 }
 ```
 
-#### 2. Nested Pattern
+This is the JSON encoding of `PT_FreeText`. Each `"<locale id>": "<string>"` pair corresponds to one `textGroup` with a `LocalisedCharacterString` for that locale. The default-language value is the ordinary attribute, which corresponds to the `CharacterString` of `PT_FreeText_PropertyType`.
 
-All convention properties are nested under a single `template` key.
+The following rules apply. Rules 1–3 are cross-references that JSON Schema cannot express, so validators have to check them separately.
 
-**Convention metadata name**: `template`
+1. Every key of `lan:freeText` MUST name an attribute of the same node whose value is a string.
+2. Every locale id used in `lan:freeText` MUST be declared in `lan:otherLocale`.
+3. An attribute MUST NOT have more than one value for a given locale. The object encoding enforces this, because keys must be unique.
+4. Coverage MAY be partial. An attribute need not be translated into every declared locale, and a locale need not cover every attribute.
+5. Keys MUST NOT name `zarr_conventions` or properties of this convention (`lan:*`).
 
-| Field Name | Type                                | Description                                  |
-| ---------- | ----------------------------------- | -------------------------------------------- |
-| template   | [Template Object](#template-object) | **REQUIRED**. Template convention properties |
+### What is localised
 
-**Example**:
+Only attribute **values** that are natural-language text are localised. In particular:
+
+- **Attribute names are never localised.** An attribute name is an identifier in a vocabulary, not text. Labels for attribute names in a user interface belong to the vocabulary that defines the attribute, not to the data set.
+- **Identifiers and controlled values are never localised.** This includes units, standard names, code list values and CRS identifiers, and any attribute that software parses rather than displays.
+- **Only string values are covered** in this version. Array-valued attributes are out of scope.
+
+This convention does not enumerate the attributes that may be localised. The conventions that define those attributes determine whether a value is natural-language text.
+
+## Recommendations
+
+### For writers
+
+- Use the language of the most complete or the original content as `lan:defaultLocale`.
+- Use short, readable locale ids (e.g. `FR`, `ZH`) and the same ids on all nodes of a hierarchy.
+- Do not embed markup, bidirectional control characters or Unicode language tag characters in values. Store text in logical order.
+
+### For readers
+
+- To select a language, build a BCP 47 tag for each locale from its `language` (mapped to the shortest ISO 639 code), its `script` and its `country`, e.g. `zho` + `Hans` → `zh-Hans`. Then match the requested tag against these using the RFC 4647 "lookup" algorithm.
+- For each attribute, return the localised value for the selected locale if present, otherwise the ordinary attribute value.
+- Accept ISO 639-2/B codes (e.g. `fre`, `chi`) as equivalent to their ISO 639-2/T counterparts.
+
+## Examples
+
+### Bilingual group (English and Canadian French)
 
 ```json
 {
+  "zarr_format": 3,
+  "node_type": "group",
   "attributes": {
-    "zarr_conventions": [{ "name": "template", "spec_url": "..." }],
-    "template": {
-      "new_field": "example value",
-      "xyz": { "x": 1.0, "y": 2.0, "z": 3.0 }
+    "zarr_conventions": [
+      {
+        "uuid": "6df0d0c6-c26e-4580-94e9-7c6adff481a4",
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_lan/refs/heads/main/schema.json",
+        "spec_url": "https://github.com/R-CF/zarr_convention_lan/refs/heads/main/README.md",
+        "name": "lan",
+        "description": "Multilingual attribute values based on ISO 19115-1 PT_Locale and PT_FreeText"
+      }
+    ],
+    "lan:defaultLocale": { "language": "eng", "country": "CA", "characterEncoding": "utf8" },
+    "lan:otherLocale": [
+      { "id": "FR", "language": "fra", "country": "CA", "characterEncoding": "utf8" }
+    ],
+    "title": "Sea surface temperature, Gulf of St. Lawrence",
+    "summary": "Daily gridded SST from satellite observations.",
+    "lan:freeText": {
+      "title":   { "FR": "Température de surface de la mer, golfe du Saint-Laurent" },
+      "summary": { "FR": "TSM quotidienne sur grille issue d'observations satellitaires." }
     }
   }
 }
 ```
 
-### Template Object
+### UN official languages on an array
 
-When using the nested pattern, all properties are contained in the `template` object:
+```json
+{
+  "zarr_format": 3,
+  "node_type": "array",
+  "attributes": {
+    "zarr_conventions": [
+      { "uuid": "6df0d0c6-c26e-4580-94e9-7c6adff481a4", "name": "lan" }
+    ],
+    "lan:defaultLocale": { "language": "eng", "characterEncoding": "utf8" },
+    "lan:otherLocale": [
+      { "id": "AR", "language": "ara", "characterEncoding": "utf8" },
+      { "id": "ZH", "language": "zho", "script": "Hans", "characterEncoding": "utf8" },
+      { "id": "FR", "language": "fra", "characterEncoding": "utf8" },
+      { "id": "RU", "language": "rus", "characterEncoding": "utf8" },
+      { "id": "ES", "language": "spa", "characterEncoding": "utf8" }
+    ],
+    "long_name": "Sea surface temperature",
+    "unit": "K",
+    "lan:freeText": {
+      "long_name": {
+        "AR": "درجة حرارة سطح البحر",
+        "ZH": "海表温度",
+        "FR": "Température de surface de la mer",
+        "RU": "Температура поверхности моря",
+        "ES": "Temperatura de la superficie del mar"
+      }
+    }
+  }
+}
+```
 
-| Field Name  | Type                      | Description                                  |
-| ----------- | ------------------------- | -------------------------------------------- |
-| new_field   | string                    | **REQUIRED**. Describe the required field... |
-| xyz         | [XYZ Object](#xyz-object) | Describe the field...                        |
-| another_one | \[number]                 | Describe the field...                        |
+The array metadata is abbreviated: `shape`, `data_type`, `chunk_grid` and the other required array fields are omitted. `units` is not localised.
 
-### Additional Field Information
+## Mapping to ISO 19115-3 XML
 
-#### new_field (template:new_field or template.new_field)
+Each entry in `lan:freeText` becomes one element of type `PT_FreeText_PropertyType`. `lan:defaultLocale` and `lan:otherLocale` map to `mdb:defaultLocale` and `mdb:otherLocale`, with `id` becoming `PT_Locale/@id`:
 
-This is a much more detailed description of the field `new_field`...
+```xml
+<cit:title xsi:type="lan:PT_FreeText_PropertyType">
+  <gco:CharacterString>Sea surface temperature, Gulf of St. Lawrence</gco:CharacterString>
+  <lan:PT_FreeText>
+    <lan:textGroup>
+      <lan:LocalisedCharacterString locale="#FR">Température de surface de la mer, golfe du Saint-Laurent</lan:LocalisedCharacterString>
+    </lan:textGroup>
+  </lan:PT_FreeText>
+</cit:title>
+```
 
-### XYZ Object
+`script` has no ISO 19115-3 equivalent and is dropped on export. ISO/TR 19115-4 JSON carries the locales but has no place for the localised values.
 
-This is the introduction for the purpose and the content of the XYZ Object...
+## FAQ
 
-| Field Name | Type   | Description                                  |
-| ---------- | ------ | -------------------------------------------- |
-| x          | number | **REQUIRED**. Describe the required field... |
-| y          | number | **REQUIRED**. Describe the required field... |
-| z          | number | **REQUIRED**. Describe the required field... |
+**Why not use BCP 47 tags directly?**
+ISO 19115 identifies languages by ISO 639 codes in `PT_Locale`. Keeping these codes makes the mapping to ISO lossless. Readers derive BCP 47 tags only for matching.
 
-## Known Implementations
+**Why are translations not nested under each attribute?**
+Replacing a string value with an object would break every reader that is unaware of this convention. ISO 19115-3 makes the same choice: the default `CharacterString` stays in place, and the `PT_FreeText` element is added next to it.
 
-This section helps potential implementers assess the convention's maturity and adoption, and provides a way for the community to collaborate on future revisions.
+**Why no inheritance from a parent group?**
+Locale ids are references within a single document. If ids were inherited, an array opened on its own would contain references that cannot be resolved.
 
-### Libraries and Tools
+**Is the `id` needed?**
+ISO 19115-1 associates each `LocalisedCharacterString` with a `PT_Locale`. ISO/TR 19115-4 has no identifier to refer to a locale with. The alternative, repeating the full Locale object for every string, is redundant. `id` is the solution ISO 19115-3 uses.
 
-- **[Library/Tool Name](https://link-to-repo)** - Brief description of the implementation
-  - Language: Python/JavaScript/Rust/etc.
-  - Status: Experimental/Stable/Production
-  - Maintainer: @github-handle
-  - Since: Version X.Y or Date
+## Versioning and Compatibility
 
-- **[Another Implementation](https://link)** - Description
-  - Language: Language
-  - Status: Status
-  - Maintainer: @handle
-  - Since: Version/Date
+This convention uses semantic versioning:
 
-### Datasets Using This Convention
+- **Patch** releases change documentation only.
+- **Minor** releases add optional fields. A document valid under version x.y is valid under x.(y+1).
+- **Major** releases may change or remove fields.
 
-- **[Dataset Name](https://link-to-dataset)** - Description of the dataset and how it uses this convention
-- **[Another Dataset](https://link)** - Description
+Readers SHOULD ignore unknown fields in Locale objects.
 
-### Resources
+## References
 
-- Tutorials, blog posts, or other resources demonstrating this convention
-- Community discussions or working groups
-
-_If you implement or use this convention, please add your implementation to this list by submitting a pull request._
-
-## Acknowledgements
-
-This template is based on the [STAC extensions template](https://github.com/stac-extensions/template/blob/main/README.md).
+- ISO 19115-1:2014, *Geographic information — Metadata — Part 1: Fundamentals*, clause 7.3 (language localization).
+- ISO/TS 19115-3, *XML schema implementation for fundamental concepts*, namespace `lan`.
+- ISO/TR 19115-4:2026, *JSON schema implementation of metadata fundamentals*; schema `https://schemas.isotc211.org/json/19115/-4/mdj/1.0.0/mdj.json`.
+- ISO 639-2, ISO 639-3, ISO 3166-1, ISO 15924.
+- BCP 47 (RFC 5646, RFC 4647).
+- W3C, *Strings on the Web: Language and Direction Metadata*.

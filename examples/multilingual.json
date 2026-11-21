@@ -1,0 +1,33 @@
+{
+  "zarr_format": 3,
+  "node_type": "array",
+  "attributes": {
+    "zarr_conventions": [
+      {
+        "uuid": "6df0d0c6-c26e-4580-94e9-7c6adff481a4",
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_lan/refs/heads/main/schema.json",
+        "spec_url": "https://github.com/R-CF/zarr_convention_lan/refs/heads/main/README.md",
+        "name": "lan",
+      }
+    ],
+    "lan:defaultLocale": { "language": "eng", "characterEncoding": "utf8" },
+    "lan:otherLocale": [
+      { "id": "AR", "language": "ara", "characterEncoding": "utf8" },
+      { "id": "ZH", "language": "zho", "script": "Hans", "characterEncoding": "utf8" },
+      { "id": "FR", "language": "fra", "characterEncoding": "utf8" },
+      { "id": "RU", "language": "rus", "characterEncoding": "utf8" },
+      { "id": "ES", "language": "spa", "characterEncoding": "utf8" }
+    ],
+    "long_name": "Sea surface temperature",
+    "unit": "K",
+    "lan:freeText": {
+      "long_name": {
+        "AR": "درجة حرارة سطح البحر",
+        "ZH": "海表温度",
+        "FR": "Température de surface de la mer",
+        "RU": "Температура поверхности моря",
+        "ES": "Temperatura de la superficie del mar"
+      }
+    }
+  }
+}

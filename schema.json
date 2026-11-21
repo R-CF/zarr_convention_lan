@@ -1,7 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Template Convention",
-  "description": "Schema for Template Zarr convention, supporting both key-prefixed and nested namespace patterns",
+  "$id": "https://raw.githubusercontent.com/zarr-conventions/lan/refs/heads/main/schema.json",
+  "title": "Language localisation convention for Zarr",
+  "description": "Multilingual free text for Zarr attributes, encoding the ISO 19115-1 language localization package.",
   "type": "object",
   "properties": {
     "zarr_format": {
@@ -19,53 +20,67 @@
       "properties": {
         "zarr_conventions": {
           "type": "array",
-          "description": "Array of convention metadata objects",
           "contains": {
             "$ref": "#/$defs/conventionMetadata"
           }
-        }
-      },
-      "required": ["zarr_conventions"],
-      "oneOf": [
-        {
-          "$ref": "#/$defs/keyPrefixedAttributes"
         },
-        {
-          "$ref": "#/$defs/nestedAttributes"
-        }
-      ]
+        "$ref": "#/$defs/lanAttributes"
+      },
+      "required": ["zarr_conventions"]
     }
   },
   "required": ["zarr_format", "node_type", "attributes"],
-  "additionalProperties": true,
   "$defs": {
+    "lanAttributes": {
+      "type": "object",
+      "properties": {
+        "lan:defaultLocale": {
+          "$ref": "#/$defs/defaultLocale"
+        },
+        "lan:otherLocale": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/otherLocale"
+          }
+        },
+        "lan:freeText": {
+          "$ref": "#/$defs/freeText"
+        }
+      },
+      "required": ["lan:defaultLocale"],
+      "dependentRequired": {
+        "lan:freeText": ["lan:otherLocale"],
+        "lan:otherLocale": ["lan:freeText"]
+      }
+    },
     "conventionMetadata": {
       "type": "object",
       "description": "Template convention metadata object for use in zarr_conventions array",
       "properties": {
         "schema_url": {
           "type": "string",
-          "const": "https://raw.githubusercontent.com/zarr-conventions/template/refs/tags/v1/schema.json",
+          "const": "https://raw.githubusercontent.com/R-CF/zarr_convention_lan/refs/heads/main/schema.json",
           "description": "URL to the JSON Schema definition for this convention"
         },
         "spec_url": {
           "type": "string",
-          "const": "https://github.com/zarr-conventions/template/blob/v1/README.md",
+          "const": "https://github.com/R-CF/zarr_convention_lan/refs/heads/main/README.md",
           "description": "URL to the full specification document"
         },
         "uuid": {
           "type": "string",
-          "const": "00000000-0000-0000-0000-000000000000",
+          "const": "6df0d0c6-c26e-4580-94e9-7c6adff481a4",
           "description": "UUID that permanently identifies this convention"
         },
         "name": {
           "type": "string",
-          "description": "Human-readable name of the convention. Should be 'template:' for key-prefixed pattern or 'template' for nested pattern"
+          "const": "lan"
         },
         "description": {
           "type": "string",
-          "const": "Template convention for demonstrating Zarr convention metadata structure",
-          "description": "Brief description of the convention's purpose and usage"
+          "const": "Multilingual attribute values based on ISO 19115-1 PT_Locale and PT_FreeText"
         }
       },
       "anyOf": [
@@ -81,82 +96,91 @@
       ],
       "additionalProperties": false
     },
-    "conventionProperties": {
-      "type": "object",
-      "description": "Template convention properties",
-      "properties": {
-        "new_field": {
-          "type": "string",
-          "description": "REQUIRED. Describe the required field..."
+    "locale": {
+      "description": "ISO/TR 19115-4 PT_Locale, constrained to the codes used by this convention, plus the optional script extension.",
+      "allOf": [
+        {
+          "$ref": "https://schemas.isotc211.org/json/19115/-4/mdj/1.0.0/mdj.json#PT_Locale"
         },
-        "xyz": {
-          "$ref": "#/$defs/xyzObject"
-        },
-        "another_one": {
-          "type": "array",
-          "description": "Array of numeric values",
-          "items": {
-            "type": "number"
+        {
+          "type": "object",
+          "properties": {
+            "language": {
+              "description": "ISO 639-2/T alpha-3 code; ISO 639-3 where no ISO 639-2 code exists",
+              "type": "string",
+              "pattern": "^[a-z]{3}$"
+            },
+            "country": {
+              "description": "ISO 3166-1 alpha-2 code",
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            },
+            "characterEncoding": {
+              "description": "Zarr JSON metadata is always UTF-8",
+              "const": "utf8"
+            },
+            "script": {
+              "description": "Extension: ISO 15924 alpha-4 script code",
+              "type": "string",
+              "pattern": "^[A-Z][a-z]{3}$"
+            }
           }
         }
-      },
-      "required": ["new_field"],
-      "additionalProperties": false
+      ]
     },
-    "xyzObject": {
-      "type": "object",
-      "description": "XYZ Object containing x, y, z coordinates",
-      "properties": {
-        "x": {
-          "type": "number",
-          "description": "REQUIRED. X coordinate value"
-        },
-        "y": {
-          "type": "number",
-          "description": "REQUIRED. Y coordinate value"
-        },
-        "z": {
-          "type": "number",
-          "description": "REQUIRED. Z coordinate value"
-        }
-      },
-      "required": ["x", "y", "z"],
-      "additionalProperties": false
-    },
-    "keyPrefixedAttributes": {
-      "type": "object",
-      "description": "Template convention using key-prefixed pattern (e.g., template:new_field)",
-      "properties": {
-        "zarr_conventions": true,
-        "template:new_field": {
-          "type": "string",
-          "description": "REQUIRED. Describe the required field..."
-        },
-        "template:xyz": {
-          "$ref": "#/$defs/xyzObject"
-        },
-        "template:another_one": {
-          "type": "array",
-          "description": "Array of numeric values",
-          "items": {
-            "type": "number"
+    "defaultLocale": {
+      "allOf": [
+        { "$ref": "#/$defs/locale" },
+        {
+          "not": {
+            "required": ["id"]
           }
         }
-      },
-      "required": ["template:new_field"],
-      "additionalProperties": true
+      ]
     },
-    "nestedAttributes": {
+    "otherLocale": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/locale"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/localeId"
+            }
+          },
+          "required": ["id"]
+        }
+      ]
+    },
+    "localeId": {
+      "description": "Extension (as PT_Locale/@id in ISO 19115-3): identifier of the locale within this node",
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "freeText": {
+      "description": "PT_FreeText: attribute name -> locale id -> localised string",
       "type": "object",
-      "description": "Template convention using nested pattern (single 'template' key)",
-      "properties": {
-        "zarr_conventions": true,
-        "template": {
-          "$ref": "#/$defs/conventionProperties"
+      "minProperties": 1,
+      "propertyNames": {
+        "not": {
+          "anyOf": [
+            { "pattern": "^lan:" },
+            { "const": "zarr_conventions" }
+          ]
         }
       },
-      "required": ["template"],
-      "additionalProperties": true
+      "additionalProperties": {
+        "type": "object",
+        "minProperties": 1,
+        "propertyNames": {
+          "$ref": "#/$defs/localeId"
+        },
+        "additionalProperties": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   }
 }
