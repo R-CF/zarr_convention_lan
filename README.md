@@ -4,7 +4,7 @@
 - **Name:** `lan`
 - **Namespace:** `lan:`
 - **Schema URL:** https://raw.githubusercontent.com/R-CF/zarr_convention_lan/refs/heads/main/schema.json
-- **Spec URL:** https://github.com/R-CF/zarr_convention_lan/refs/heads/main/README.md
+- **Spec URL:** https://github.com/R-CF/zarr_convention_lan/blob/main/README.md
 - **Extension Maturity Classification:** Proposal
 - **Owner:** @pvanlaake
 
@@ -27,7 +27,7 @@ Several jurisdictions require metadata in more than one language, for example th
 {
   "uuid": "6df0d0c6-c26e-4580-94e9-7c6adff481a4",
   "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_lan/refs/heads/main/schema.json",
-  "spec_url": "https://github.com/R-CF/zarr_convention_lan/refs/heads/main/README.md",
+  "spec_url": "https://github.com/R-CF/zarr_convention_lan/blob/main/README.md",
   "name": "lan",
   "description": "Multilingual attribute values based on ISO 19115-1 PT_Locale and PT_FreeText"
 }

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/zarr-conventions/lan/refs/heads/main/schema.json",
+  "$id": "https://raw.githubusercontent.com/R-CF/zarr_convention_lan/refs/heads/main/schema.json",
   "title": "Language localisation convention for Zarr",
   "description": "Multilingual free text for Zarr attributes, encoding the ISO 19115-1 language localization package.",
   "type": "object",
@@ -23,10 +23,10 @@
           "contains": {
             "$ref": "#/$defs/conventionMetadata"
           }
-        },
-        "$ref": "#/$defs/lanAttributes"
+        }
       },
-      "required": ["zarr_conventions"]
+      "required": ["zarr_conventions"],
+      "$ref": "#/$defs/lanAttributes"
     }
   },
   "required": ["zarr_format", "node_type", "attributes"],
@@ -66,7 +66,7 @@
         },
         "spec_url": {
           "type": "string",
-          "const": "https://github.com/R-CF/zarr_convention_lan/refs/heads/main/README.md",
+          "const": "https://github.com/R-CF/zarr_convention_lan/blob/main/README.md",
           "description": "URL to the full specification document"
         },
         "uuid": {
@@ -132,18 +132,18 @@
       "allOf": [
         { "$ref": "#/$defs/locale" },
         {
-          "not": {
-            "required": ["id"]
+          "type": "object",
+          "properties": {
+            "id": false
           }
         }
       ]
     },
     "otherLocale": {
       "allOf": [
+        { "$ref": "#/$defs/locale" },
         {
-          "$ref": "#/$defs/locale"
-        },
-        {
+          "type": "object",
           "properties": {
             "id": {
               "$ref": "#/$defs/localeId"
